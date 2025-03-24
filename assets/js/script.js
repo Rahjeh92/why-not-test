@@ -4,110 +4,162 @@
  */
 function toggleMenu(id) {
     var menu = document.getElementById(id);
-
-    if (!menu) {
-        console.error("Menu not found: " + id);
-        return;
-    }
-
-    if (menu.style.maxHeight) {
-        menu.style.maxHeight = null; // Collapse this menu
-    } else {
-        menu.style.maxHeight = menu.scrollHeight + "px"; // Expand this menu
-    }
+    if (!menu) return console.error("Menu not found: " + id);
+    menu.style.maxHeight = (menu.style.maxHeight && menu.style.maxHeight !== "0px") ? "0px" : menu.scrollHeight + "px";
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    let cart = []; // Stores cart items
-    let totalPrice = 0; // Stores total price
+    let cart = [];  // 🚨 Always start with an empty cart
+    let totalPrice = 0;  // 🚨 Reset total price on page load
 
-    // Select all menu items and add click event to add to cart
-    document.querySelectorAll(".menu-items tbody tr").forEach(row => {
-        row.addEventListener("click", function () {
-            let item = this.cells[0]?.textContent.trim(); // Get item name
-            let priceText = this.cells[1]?.textContent.trim().replace("€", ""); // Get price
-            let price = parseFloat(priceText); // Convert price to number
+    localStorage.removeItem("cart");  // ❌ Clear saved cart
+    localStorage.removeItem("totalPrice");  // ❌ Clear saved total price
 
-            if (!isNaN(price)) {
-                addToCart(item, price);
-            } else {
-                console.error("Invalid price format:", priceText);
-            }
-        });
-    });
-
-    /**
-     * Adds an item to the cart and updates the display.
-     * @param {string} item - The name of the item.
-     * @param {number} price - The price of the item.
-     */
-    function addToCart(item, price) {
-        cart.push({ item, price });
-        totalPrice += price;
-        updateCartDisplay();
+    function saveCartToLocalStorage() {
+        localStorage.setItem("cart", JSON.stringify(cart));
+        localStorage.setItem("totalPrice", totalPrice.toFixed(2));
     }
 
-    /**
-     * Updates the cart display in the UI.
-     */
+    function addToCart(item, price) {
+        let existingItem = cart.find(order => order.item === item);
+        if (existingItem) {
+            existingItem.quantity++;
+            existingItem.totalPrice += price;
+        } else {
+            cart.push({ item, unitPrice: price, totalPrice: price, quantity: 1 });
+        }
+        totalPrice += price;
+        updateCartDisplay();
+        saveCartToLocalStorage();
+    }
+
     function updateCartDisplay() {
         let cartList = document.getElementById("cart-list");
         let totalDisplay = document.getElementById("total-price");
 
-        cartList.innerHTML = ""; // Clear the cart list before re-adding items
+        cartList.innerHTML = ""; // Clear previous cart list
 
         cart.forEach((order, index) => {
             let li = document.createElement("li");
 
             li.innerHTML = `
-                <span class="item-name">${order.item}</span>
-                <span class="item-price">${order.price.toFixed(2)} €</span>
-                <button class="delete-item" data-index="${index}">X</button>
+                <span class="item-name">${order.item} ${order.quantity > 1 ? `x${order.quantity}` : ""}</span>
+                <span class="item-price">${order.totalPrice.toFixed(2)} €</span>
+                <div class="cart-controls">
+                    <button data-index="${index}" class="decrease-qty small-btn">-</button>
+                    <button data-index="${index}" class="increase-qty small-btn">+</button>
+                    <button data-index="${index}" class="delete-item small-btn">X</button>
+                </div>
             `;
 
             cartList.appendChild(li);
         });
 
         totalDisplay.textContent = `Total: ${totalPrice.toFixed(2)} €`;
+
+        saveCartToLocalStorage();
     }
 
-
-    /**
-     * Removes an item from the cart and updates the display.
-     * @param {number} index - The index of the item to remove.
-     */
-    function removeFromCart(index) {
-        if (index >= 0 && index < cart.length) {
-            totalPrice -= cart[index].price; // Deduct price from total
-            cart.splice(index, 1); // Remove item from array
-            updateCartDisplay(); // Update UI
-        }
+    function increaseQuantity(index) {
+        cart[index].quantity++;
+        cart[index].totalPrice = cart[index].unitPrice * cart[index].quantity;
+        totalPrice += cart[index].unitPrice;
+        updateCartDisplay();
+        saveCartToLocalStorage();
     }
 
-    // Event listener for delete buttons in the cart
-    document.getElementById("cart-list").addEventListener("click", function (event) {
-        if (event.target.classList.contains("delete-item")) {
-            let index = parseInt(event.target.getAttribute("data-index"));
+    function decreaseQuantity(index) {
+        if (cart[index].quantity > 1) {
+            cart[index].quantity--;
+            cart[index].totalPrice = cart[index].unitPrice * cart[index].quantity;
+            totalPrice -= cart[index].unitPrice;
+        } else {
             removeFromCart(index);
-        }
-    });
-
-    /**
-     * Sends the order via email.
-     */
-    function sendOrder() {
-        if (cart.length === 0) {
-            alert("Your cart is empty!");
             return;
         }
-
-        let orderDetails = cart.map(order => `${order.item}: ${order.price.toFixed(2)} €`).join("\n");
-        let subject = "New Order";
-        let body = `Order Details:\n\n${orderDetails}\n\nTotal Price: ${totalPrice.toFixed(2)} €`;
-
-        window.location.href = `mailto:your-email@example.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        updateCartDisplay();
+        saveCartToLocalStorage();
     }
 
-    // Attach event listener to the send order button
-    document.getElementById("send-order").addEventListener("click", sendOrder);
+    function removeFromCart(index) {
+        totalPrice -= cart[index].totalPrice;
+        cart.splice(index, 1);
+        updateCartDisplay();
+        saveCartToLocalStorage();
+    }
+
+    function showBill() {
+        if (cart.length === 0) return alert("Your cart is empty!");
+        let billItems = document.getElementById("bill-items");
+        let billTotal = document.getElementById("bill-total");
+        billItems.innerHTML = "";
+        cart.forEach(order => {
+            let li = document.createElement("li");
+            li.innerHTML = `<span>${order.item} x${order.quantity}</span> <span>${order.totalPrice.toFixed(2)} €</span>`;
+            billItems.appendChild(li);
+        });
+        billTotal.innerHTML = `<strong>Total:</strong> ${totalPrice.toFixed(2)} €`;
+        document.getElementById("bill").style.display = "block";
+    }
+
+    function printBill() {
+        if (cart.length === 0) return alert("Your cart is empty!");
+
+        const { jsPDF } = window.jspdf; // ✅ Load jsPDF correctly
+        let doc = new jsPDF(); // ✅ Create a new PDF document
+
+        // 📌 Set title
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        doc.text("Your Bill", 80, 20);
+
+        // 📌 Add bill items
+        let y = 40; // Set starting position for items
+        cart.forEach(order => {
+            doc.setFontSize(12);
+            doc.text(`${order.item} x${order.quantity} - ${order.totalPrice.toFixed(2)} €`, 20, y);
+            y += 10; // Move down for the next item
+        });
+
+        // 📌 Add total price
+        doc.setFontSize(14);
+        doc.text(`Total: ${totalPrice.toFixed(2)} €`, 20, y + 10);
+
+        // 📌 Save and download as "Bill.pdf"
+        doc.save("Bill.pdf");
+    }
+
+
+    function closeBill() {
+        document.getElementById("bill").style.display = "none";
+    }
+
+    function resetOrder() {
+        cart = [];
+        totalPrice = 0;
+        updateCartDisplay();
+        saveCartToLocalStorage();
+        closeBill();
+    }
+
+    document.querySelectorAll(".menu-items tbody tr").forEach(row => {
+        row.addEventListener("click", function () {
+            let item = this.cells[0]?.textContent.trim();
+            let price = parseFloat(this.cells[1]?.textContent.trim().replace("€", ""));
+            if (!isNaN(price)) addToCart(item, price);
+            else console.error("Invalid price format");
+        });
+    });
+
+    document.getElementById("cart-list").addEventListener("click", function (event) {
+        let index = parseInt(event.target.getAttribute("data-index"));
+        if (event.target.classList.contains("delete-item")) removeFromCart(index);
+        else if (event.target.classList.contains("increase-qty")) increaseQuantity(index);
+        else if (event.target.classList.contains("decrease-qty")) decreaseQuantity(index);
+    });
+
+    document.getElementById("send-order").addEventListener("click", showBill);
+    document.getElementById("print-bill").addEventListener("click", printBill);
+    document.getElementById("close-bill").addEventListener("click", closeBill);
+    document.getElementById("reset-order").addEventListener("click", resetOrder);
 });

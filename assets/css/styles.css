@@ -18,7 +18,6 @@ body {
     /* Prevents horizontal scroll */
 }
 
-
 /* =============================
    Header
    ============================= */
@@ -80,9 +79,9 @@ p {
 .menu-items {
     max-height: 0;
     overflow: hidden;
+    transition: max-height 0.4s ease-in-out;
     background: rgba(255, 255, 255, 0.6);
     border-radius: 10px;
-    transition: max-height 0.4s ease-in-out;
 
 }
 
@@ -283,6 +282,35 @@ footer {
     min-width: 60px;
 }
 
+.small-btn {
+    font-size: 12px;
+    /* Make button text smaller */
+    padding: 3px 6px;
+    /* Reduce button padding */
+    border: none;
+    background: rgba(255, 0, 0, 0.6);
+    /* Red color like delete button */
+    color: white;
+    cursor: pointer;
+    margin: 2px;
+    border-radius: 4px;
+    /* Rounded corners */
+}
+
+.small-btn:hover {
+    background-color: #FF6565;
+    /* Darker red on hover */
+}
+
+.cart-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    /* Space between buttons */
+}
+
+
+
 .delete-item {
     background: #ff4dd2;
     color: white;
@@ -334,6 +362,53 @@ footer {
     background: rgb(255, 77, 225);
 }
 
+/* =============================
+   Bill
+   ============================= */
+.bill-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    z-index: 1000;
+}
+
+.bill-container h2 {
+    margin-bottom: 10px;
+}
+
+.bill-container ul {
+    list-style: none;
+    padding: 0;
+}
+
+.bill-container li {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+
+.bill-container button {
+    margin: 10px 5px;
+    padding: 10px;
+    border: none;
+    background: purple;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.bill-container button:hover {
+    background: rgb(255, 77, 225);
+}
+
+
 /* 🎯 Make menu items clickable */
 .menu-items tbody tr {
     cursor: pointer;
@@ -343,6 +418,23 @@ footer {
 .menu-items tbody tr:hover {
     background: rgba(255, 0, 0, 0.2);
 }
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+}
+
+.fade-out {
+    animation: fadeOut 0.3s forwards;
+}
+
 
 
 /* =============================

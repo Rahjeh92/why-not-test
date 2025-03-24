@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Why No? Menü</title>
 
+    <!-- 📌 Import jsPDF library to generate and download the bill as a PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -257,6 +260,16 @@
             <button id="send-order">Send Order</button>
         </div>
     </section>
+
+    <!-- Bill -->
+    <div id="bill" class="bill-container">
+        <h2>Your Bill</h2>
+        <ul id="bill-items"></ul>
+        <p id="bill-total"><strong>Total:</strong> 0.00 €</p>
+        <button id="print-bill">Print</button>
+        <button id="close-bill">Close</button>
+        <button id="reset-order">Reset</button>
+    </div>
 
     <!-- Main JavaScript File -->
     <script src="assets/js/script.js" defer></script>
